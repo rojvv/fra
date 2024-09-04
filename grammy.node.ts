@@ -1,7 +1,74 @@
-export interface AnalyticsParams {
+export const ENTRY_KEYS = [
+  "timestamp",
+  "type",
+  "to",
+  "from",
+  "from_bot",
+  "from_firstname",
+  "from_lastname",
+  "from_username",
+  "from_languagecode",
+  "from_premium",
+  "from_type",
+  "from_title",
+  "from_businessconnection",
+  "from_boostcount",
+  "from_signature",
+  "to_bot",
+  "to_firstname",
+  "to_lastname",
+  "to_username",
+  "chat_id",
+  "chat_username",
+  "chat_title",
+  "chat_firstname",
+  "chat_lastname",
+  "chat_type",
+  "message_type",
+  "message_id",
+  "message_threadid",
+  "message_date",
+  "message_topic",
+  "message_automaticforward",
+  "message_effectid",
+  "message_replytomessageid",
+  "message_quotetext",
+  "forward_date",
+  "forward_from",
+  "forward_messageid",
+  "forward_signature",
+  "forward_bot",
+  "forward_name",
+  "message_text",
+  "message_url",
+  "dice_emoji",
+  "dice_value",
+  "callbackquery_id",
+  "callbackquery_inlinemessageid",
+  "callbackquery_data",
+  "inlinequery_id",
+  "inlinequery_text",
+  "inlinequery_offset",
+  "inlineresultchosen_id",
+  "inlineresultchosen_query",
+  "inlineresultchosen_inlinemessageid",
+  "chatmember_id",
+  "chatmember_bot",
+  "chatmember_firstname",
+  "chatmember_lastname",
+  "chatmember_username",
+  "chatmember_premium",
+  "chatmember_oldstatus",
+  "chatmember_newstatus",
+  "payload",
+];
+
+export interface FRAnalyticsParams {
   threshold?: number;
   timeout?: number;
   log?: boolean;
+  include?: (keyof Entry)[];
+  exclude?: (keyof Entry)[];
 }
 
 export abstract class AnalyticsDispatcher {
@@ -11,7 +78,18 @@ export abstract class AnalyticsDispatcher {
     return this.#entries.length >= this.#threshold;
   }
 
-  constructor(endpoint: string, params?: AnalyticsParams) {
+  constructor(endpoint: string, params?: FRAnalyticsParams) {
+    if (params?.include && params.exclude) {
+      throw new TypeError(
+        "The parameters include and exclude cannot be specified together",
+      );
+    }
+    if (params?.include) {
+      checkKeys(params.include);
+    }
+    if (params?.exclude) {
+      checkKeys(params.exclude);
+    }
     this.#canLog = params?.log ?? true;
     this.#endpoint = endpoint;
     this.#threshold = params?.threshold ?? 10_000;
@@ -74,6 +152,14 @@ export abstract class AnalyticsDispatcher {
       this.#log("Error communicating with analytics server:", err);
     } finally {
       this.#dispatching = false;
+    }
+  }
+}
+
+function checkKeys(keys: string[]) {
+  for (const key of ENTRY_KEYS) {
+    if (!keys.includes(key)) {
+      throw new TypeError(`Invalid key: ${key}`);
     }
   }
 }
@@ -264,12 +350,7 @@ export interface Entry {
 import { Context, MiddlewareFn, MiddlewareObj } from "grammy";
 import { ChatMember } from "grammy/types";
 
-export interface AnalyticsParams {
-  threshold?: number;
-  timeout?: number;
-}
-
-export class Analytics extends AnalyticsDispatcher implements MiddlewareObj {
+export class FRAnalytics extends AnalyticsDispatcher implements MiddlewareObj {
   middleware(): MiddlewareFn {
     return (ctx, next) => {
       const entry = constructEntry(ctx);

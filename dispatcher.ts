@@ -1,9 +1,12 @@
 import { Entry } from "./entry.ts";
+import { ENTRY_KEYS } from "./entry_keys.ts";
 
-export interface AnalyticsParams {
+export interface FRAnalyticsParams {
   threshold?: number;
   timeout?: number;
   log?: boolean;
+  include?: (keyof Entry)[];
+  exclude?: (keyof Entry)[];
 }
 
 export abstract class AnalyticsDispatcher {
@@ -13,7 +16,18 @@ export abstract class AnalyticsDispatcher {
     return this.#entries.length >= this.#threshold;
   }
 
-  constructor(endpoint: string, params?: AnalyticsParams) {
+  constructor(endpoint: string, params?: FRAnalyticsParams) {
+    if (params?.include && params.exclude) {
+      throw new TypeError(
+        "The parameters include and exclude cannot be specified together",
+      );
+    }
+    if (params?.include) {
+      checkKeys(params.include);
+    }
+    if (params?.exclude) {
+      checkKeys(params.exclude);
+    }
     this.#canLog = params?.log ?? true;
     this.#endpoint = endpoint;
     this.#threshold = params?.threshold ?? 10_000;
@@ -76,6 +90,14 @@ export abstract class AnalyticsDispatcher {
       this.#log("Error communicating with analytics server:", err);
     } finally {
       this.#dispatching = false;
+    }
+  }
+}
+
+function checkKeys(keys: string[]) {
+  for (const key of ENTRY_KEYS) {
+    if (!keys.includes(key)) {
+      throw new TypeError(`Invalid key: ${key}`);
     }
   }
 }

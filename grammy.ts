@@ -11,12 +11,7 @@ import { ChatType } from "./entry/chat_type.ts";
 import { ChatMemberStatus } from "./entry/chat_member_status.ts";
 import { AnalyticsDispatcher } from "./dispatcher.ts";
 
-export interface AnalyticsParams {
-  threshold?: number;
-  timeout?: number;
-}
-
-export class Analytics extends AnalyticsDispatcher implements MiddlewareObj {
+export class FRAnalytics extends AnalyticsDispatcher implements MiddlewareObj {
   middleware(): MiddlewareFn {
     return (ctx, next) => {
       const entry = constructEntry(ctx);
