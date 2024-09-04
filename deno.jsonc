@@ -2,7 +2,7 @@
   "lock": false,
   "exclude": [".mypy_cache"],
   "tasks": {
-    "fmt": "deno fmt && ruff format python ptb.py",
+    "fmt": "deno fmt",
     "build": "bash _build.sh",
     "check": "mypy ptb.py"
   },
