@@ -1,0 +1,16 @@
+{
+  "lock": false,
+  "exclude": [".mypy_cache"],
+  "tasks": {
+    "fmt": "deno fmt && ruff format python ptb.py",
+    "build": "bash _build.sh",
+    "check": "mypy ptb.py"
+  },
+  // for development
+  "imports": {
+    "@ts-morph/ts-morph": "jsr:@ts-morph/ts-morph@^23.0.0",
+    "grammy": "npm:grammy",
+    "grammy/types": "npm:grammy/types",
+    "zod": "npm:zod"
+  }
+}
