@@ -74,6 +74,8 @@ export interface FRAnalyticsParams {
 export abstract class AnalyticsDispatcher {
   #endpoint: string;
   #threshold: number;
+  #include?: (keyof Entry)[];
+  #exclude?: (keyof Entry)[];
   get thresholdReached() {
     return this.#entries.length >= this.#threshold;
   }
@@ -90,6 +92,8 @@ export abstract class AnalyticsDispatcher {
     if (params?.exclude) {
       checkKeys(params.exclude);
     }
+    this.#include = params?.include;
+    this.#exclude = params?.exclude;
     this.#canLog = params?.log ?? true;
     this.#endpoint = endpoint;
     this.#threshold = params?.threshold ?? 10_000;
@@ -118,6 +122,18 @@ export abstract class AnalyticsDispatcher {
 
   #entries = new Array<Entry>();
   addEntry(entry: Entry) {
+    if (this.#include) {
+      for (const key of ENTRY_KEYS) {
+        if (!this.#include.includes(key as keyof Entry)) {
+          delete entry[key as keyof Entry];
+        }
+      }
+    }
+    if (this.#exclude) {
+      for (const key of this.#exclude) {
+        delete entry[key as keyof Entry];
+      }
+    }
     this.#entries.push(entry);
   }
 
@@ -157,8 +173,8 @@ export abstract class AnalyticsDispatcher {
 }
 
 function checkKeys(keys: string[]) {
-  for (const key of ENTRY_KEYS) {
-    if (!keys.includes(key)) {
+  for (const key of keys) {
+    if (!ENTRY_KEYS.includes(key)) {
       throw new TypeError(`Invalid key: ${key}`);
     }
   }
